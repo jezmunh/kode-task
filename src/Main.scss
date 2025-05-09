@@ -1,0 +1,19 @@
+// styles.scss
+.my-input {
+  .MuiOutlinedInput-root {
+    background-color: #f7f7f8;
+    border-radius: 20px;
+
+    &:hover fieldset {
+      border-color: blue;
+    }
+
+    &.Mui-focused fieldset {
+      border-color: blue;
+    }
+  }
+
+  .MuiInputLabel-root {
+    color: green;
+  }
+}
