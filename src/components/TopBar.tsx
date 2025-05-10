@@ -1,4 +1,4 @@
-import { Container, TextField, Typography, InputAdornment, Tooltip } from "@mui/material"
+import { Container, TextField, Typography, InputAdornment, Tooltip, Link, Box } from "@mui/material"
 import SearchIcon from '@mui/icons-material/Search'
 import TuneIcon from '@mui/icons-material/Tune'
 import axios, { Axios } from 'axios'
@@ -17,9 +17,23 @@ export const TopBar = ({setWorkers}: Props) => {
     
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [activeCategory, setActiveCategory] = useState('all');
+
+    const links = [
+        {label: "Все", value: "all"},
+        {label: "Designers", value: "designers"},
+        {label: "Analysts", value: "analytics"},
+        {label: "Managers", value: "managment"},
+        {label: "IOS", value: "ios"},
+        {label: "Android", value: "android"},
+        {label: "Frontend", value: "frontend"},
+        {label: "Backend", value: "backend"},
+        {label: "Support", value: "support"},
+    ];
+
 
     useEffect(() => {
-        const url = 'https://stoplight.io/mocks/kode-frontend-team/koder-stoplight/86566464/users?__example=all';
+        const url = `https://stoplight.io/mocks/kode-frontend-team/koder-stoplight/86566464/users?__example=${activeCategory}`;
         setIsLoading(true);
         try {
             axios.get(url, {headers: {"Content-Type": "application/json"}}).then((res) => {
@@ -32,7 +46,7 @@ export const TopBar = ({setWorkers}: Props) => {
             setIsLoading(false);
         }
         
-    }, [setWorkers]);
+    }, [activeCategory, setWorkers]);
 
     isLoading && console.log("Загрузка...")
     error && console.log("Ошибка!")
@@ -52,6 +66,34 @@ export const TopBar = ({setWorkers}: Props) => {
                 },
                 }}
         />
+       <Box
+  sx={{
+    display: "flex",
+    gap: 4,
+    py: 2,
+    flexWrap: "wrap",
+  }}
+>
+  {links.map((item) => (
+    <Link
+      key={item.value}
+      href="#"
+      underline="none"
+      onClick={() => setActiveCategory(item.value)}
+      sx={{
+        color: activeCategory === item.value ? "#000" : "#97979b",
+        fontWeight: activeCategory === item.value ? "bold" : "normal",
+        fontSize: "1.2rem",
+        borderBottom: activeCategory === item.value ? "2px solid #007aff" : "2px solid transparent",
+        transition: "all 0.2s",
+        paddingBottom: "4px",
+        cursor: "pointer",
+      }}
+    >
+      {item.label}
+    </Link>
+  ))}
+</Box>
     </Container>
   )
 }

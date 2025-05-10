@@ -1,5 +1,6 @@
 import type { Worker } from "../types";
-import { Avatar, Container, Box, Typography, Paper} from "@mui/material"
+import { Avatar, Container, Box, Typography, Paper, Skeleton} from "@mui/material"
+
 
 interface Props {
   info: Worker[] | null;
@@ -13,6 +14,7 @@ export const List = ({ info }: Props) => {
       {info.map((item) => (
         <Paper
           key={item.id}
+          elevation={1}
           sx={{
             display: "flex",
             alignItems: "center",
@@ -21,7 +23,14 @@ export const List = ({ info }: Props) => {
             marginBottom: 2,
           }}
         >
-          <Avatar src={item.avatarUrl} sx={{ width: 56, height: 56 }} />
+          
+          {
+  item.avatarUrl ? (
+    <Avatar src={item.avatarUrl} sx={{ width: 56, height: 56 }} />
+  ) : (
+    <Skeleton variant="circular" width={56} height={56} />
+  )
+}
           <Box>
             <Typography variant="h6">
               {item.firstName} {item.lastName}{" "}
