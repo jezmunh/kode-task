@@ -7,8 +7,9 @@ interface Props {
 }
 
 export const List = ({ info }: Props) => {
-  if (!info) return <div>Нет данных</div>;
-
+  if (!info) {
+    return <div>Нет данных</div>;
+  }
   return (
     <Container sx={{ mt: 4 }}>
       {info.map((item) => (

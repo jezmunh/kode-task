@@ -1,4 +1,4 @@
-import { Container, TextField, Typography, InputAdornment, Tooltip, Link, Box } from "@mui/material"
+import { Container, TextField, Typography, InputAdornment, Tooltip, Link, Box,  Dialog, DialogTitle, DialogContent, DialogActions, Button, FormControl, Radio, RadioGroup, FormLabel, FormControlLabel} from "@mui/material"
 import SearchIcon from '@mui/icons-material/Search'
 import TuneIcon from '@mui/icons-material/Tune'
 import axios, { Axios } from 'axios'
@@ -17,6 +17,12 @@ export const TopBar = ({setWorkers}: Props) => {
     
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [open, setOpen] = useState(false);
+
+    const handleOpen = () => setOpen(true);
+    const handleClose = () => setOpen(false);
+    const [sortOption, setSortOption] = useState('alphabetical');
+
     const [activeCategory, setActiveCategory] = useState('all');
 
     const links = [
@@ -51,7 +57,25 @@ export const TopBar = ({setWorkers}: Props) => {
     isLoading && console.log("Загрузка...")
     error && console.log("Ошибка!")
     
+    const handleSortChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSortOption(event.target.value);
+  };
 
+  const handleApplyFilters = () => {
+    setOpen(false);
+
+    setWorkers((prevWorkers) => {
+      if (!prevWorkers) return null;
+
+      const sortedWorkers = [...prevWorkers];
+      if (sortOption === 'alphabetical') {
+        sortedWorkers.sort((a, b) => `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`));
+      } else if (sortOption === 'birthdate') {
+        sortedWorkers.sort((a, b) => new Date(a.birthday).getTime() - new Date(b.birthday).getTime());
+      }
+      return sortedWorkers;
+    });
+  };
     return (
         <Container>
             <Typography variant="h4" sx={{ fontWeight: "bold"}}>Поиск</Typography>
@@ -62,7 +86,7 @@ export const TopBar = ({setWorkers}: Props) => {
                 slotProps={{
                 input: {
                     startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment>,
-                    endAdornment: <Tooltip title="Фильтр" arrow><InputAdornment position="end"><TuneIcon sx={{cursor: "pointer"}}/></InputAdornment></Tooltip>
+                    endAdornment: <Tooltip title="Фильтр" arrow><InputAdornment position="end"><TuneIcon sx={{cursor: "pointer"}} onClick={handleOpen}/></InputAdornment></Tooltip>
                 },
                 }}
         />
@@ -94,6 +118,23 @@ export const TopBar = ({setWorkers}: Props) => {
     </Link>
   ))}
 </Box>
+    <Dialog open={open} onClose={handleClose}>
+        <DialogTitle>Фильтры</DialogTitle>
+        <DialogContent>
+          <FormControl>
+            <FormLabel>Сортировать по</FormLabel>
+            <RadioGroup value={sortOption} onChange={handleSortChange}>
+              <FormControlLabel value="alphabetical" control={<Radio />} label="В алфавитном порядке" />
+              <FormControlLabel value="birthdate" control={<Radio />} label="По дате рождения" />
+            </RadioGroup>
+          </FormControl>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClose}>Закрыть</Button>
+          <Button onClick={handleApplyFilters} variant="contained">Применить</Button>
+        </DialogActions>
+      </Dialog>
+
     </Container>
   )
 }
