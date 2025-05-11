@@ -14,7 +14,9 @@ interface Props {
 
 
 export const TopBar = ({setWorkers}: Props) => {
-    
+    const [searchTerm, setSearchTerm] = useState('');
+    const [allWorkers, setAllWorkers] = useState<Worker[] | null>(null);
+
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const [open, setOpen] = useState(false);
@@ -39,20 +41,19 @@ export const TopBar = ({setWorkers}: Props) => {
 
 
     useEffect(() => {
-        const url = `https://stoplight.io/mocks/kode-frontend-team/koder-stoplight/86566464/users?__example=${activeCategory}`;
-        setIsLoading(true);
-        try {
-            axios.get(url, {headers: {"Content-Type": "application/json"}}).then((res) => {
-            const allWorkers = res.data.items;
-            setWorkers(allWorkers);
-        })
-        } catch(err) {
-            setError(err);
-        }finally {
-            setIsLoading(false);
-        }
-        
-    }, [activeCategory, setWorkers]);
+  const url = `https://stoplight.io/mocks/kode-frontend-team/koder-stoplight/86566464/users?__example=${activeCategory}`;
+  setIsLoading(true);
+  axios
+    .get(url, { headers: { "Content-Type": "application/json" } })
+    .then((res) => {
+      const fetched = res.data.items;
+      setAllWorkers(fetched);
+      setWorkers(fetched); 
+    })
+    .catch((err) => setError(err))
+    .finally(() => setIsLoading(false));
+}, [activeCategory, setWorkers]);
+
 
     isLoading && console.log("Загрузка...")
     error && console.log("Ошибка!")
@@ -61,6 +62,19 @@ export const TopBar = ({setWorkers}: Props) => {
     setSortOption(event.target.value);
   };
 
+  useEffect(() => {
+  if (!allWorkers) return;
+  
+  const filtered = allWorkers.filter((worker) => {
+    const fullName = `${worker.firstName} ${worker.lastName}`.toLowerCase();
+    return (
+      fullName.includes(searchTerm.toLowerCase()) ||
+      worker.userTag.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
+
+  setWorkers(filtered);
+}, [searchTerm, allWorkers, setWorkers]);
   const handleApplyFilters = () => {
     setOpen(false);
 
@@ -73,6 +87,7 @@ export const TopBar = ({setWorkers}: Props) => {
       } else if (sortOption === 'birthdate') {
         sortedWorkers.sort((a, b) => new Date(a.birthday).getTime() - new Date(b.birthday).getTime());
       }
+      setSearchTerm('');
       return sortedWorkers;
     });
   };
@@ -80,6 +95,8 @@ export const TopBar = ({setWorkers}: Props) => {
         <Container>
             <Typography variant="h4" sx={{ fontWeight: "bold"}}>Поиск</Typography>
             <TextField className="my-input" 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
                 sx={{ width: 1, py: 3}} 
                 placeholder="Введи имя, тег, почту..." 
                 variant="outlined" 
@@ -98,6 +115,17 @@ export const TopBar = ({setWorkers}: Props) => {
     flexWrap: "wrap",
   }}
 >
+ <Box
+  sx={{
+    display: "flex",
+    gap: 4,
+    py: 2,
+    overflowX: "auto",
+    whiteSpace: "nowrap",
+    scrollbarWidth: "none",
+    "&::-webkit-scrollbar": { display: "none" },
+  }}
+>
   {links.map((item) => (
     <Link
       key={item.value}
@@ -112,28 +140,79 @@ export const TopBar = ({setWorkers}: Props) => {
         transition: "all 0.2s",
         paddingBottom: "4px",
         cursor: "pointer",
+        display: "inline-block", 
       }}
     >
       {item.label}
     </Link>
   ))}
 </Box>
-    <Dialog open={open} onClose={handleClose}>
-        <DialogTitle>Фильтры</DialogTitle>
-        <DialogContent>
-          <FormControl>
-            <FormLabel>Сортировать по</FormLabel>
-            <RadioGroup value={sortOption} onChange={handleSortChange}>
-              <FormControlLabel value="alphabetical" control={<Radio />} label="В алфавитном порядке" />
-              <FormControlLabel value="birthdate" control={<Radio />} label="По дате рождения" />
-            </RadioGroup>
-          </FormControl>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose}>Закрыть</Button>
-          <Button onClick={handleApplyFilters} variant="contained">Применить</Button>
-        </DialogActions>
-      </Dialog>
+</Box>
+    <Dialog open={open} onClose={handleClose} fullWidth>
+  <DialogTitle>
+    <Box
+      sx={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        position: "relative",
+      }}
+    >
+      <Typography variant="h6" sx={{ textAlign: "center", fontWeight: "bold", flexGrow: 1 }}>
+        Сортировка
+      </Typography>
+      <Button
+        onClick={handleClose}
+        sx={{ position: "absolute", right: 0, top: 0, minWidth: "auto", padding: 1 }}
+      >
+        ✕
+      </Button>
+    </Box>
+  </DialogTitle>
+
+  <DialogContent>
+    <FormControl>
+      <RadioGroup
+        value={sortOption}
+        onChange={(e) => {
+          const value = e.target.value;
+          setSortOption(value);
+
+          
+          setWorkers((prevWorkers) => {
+            if (!prevWorkers) return null;
+
+            const sorted = [...prevWorkers];
+            if (value === "alphabetical") {
+              sorted.sort((a, b) =>
+                `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`)
+              );
+            } else if (value === "birthdate") {
+              sorted.sort(
+                (a, b) => new Date(a.birthday).getTime() - new Date(b.birthday).getTime()
+              );
+            }
+            return sorted;
+          });
+
+          handleClose(); 
+        }}
+      >
+        <FormControlLabel
+          value="alphabetical"
+          control={<Radio />}
+          label="В алфавитном порядке"
+        />
+        <FormControlLabel
+          value="birthdate"
+          control={<Radio />}
+          label="По дате рождения"
+        />
+      </RadioGroup>
+    </FormControl>
+  </DialogContent>
+</Dialog>
+
 
     </Container>
   )
